@@ -2,9 +2,9 @@ const router = require('express').Router();
 const restaurantController = require('../controllers/restaurantController');
 
 // Use the correct function names
-router.post("/", restaurantControllerController.addRestaurant);
+router.post("/add", restaurantController.addRestaurant);
 
-router.get("/:code", restaurantControllerController.getRandomRestaurants);
+router.get("/:code", restaurantController.getRandomRestaurants);
 
 router.get("/all/:code", restaurantController.getAllNearByRestaurants);
 

@@ -7,15 +7,17 @@ module.exports = {
             if (!title || !time || !imageUrl || !owner || !code || !logoUrl || !coords || !coords.latitude || !coords.longitude || !coords.address || !coords.title) {
                 return res.status(400).json({ status: false, message: "You have a missing field" });
             }
-
+    
             const newRestaurant = new Restaurant(req.body);
             await newRestaurant.save();
             res.status(201).json({ status: true, message: "Restaurant has been successfully added" });
-
+    
         } catch (error) {
+            console.error("Error in addRestaurant: ", error);  // Add this to log the error
             res.status(500).json({ status: false, message: error.message });
         }
     },
+    
 
     getRestaurantById: async (req, res) => {
         const id = req.params.id;
