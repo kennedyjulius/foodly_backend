@@ -4,21 +4,20 @@ module.exports = {
     addFoods: async (req, res) => {
         const { title, foodTags, category, code, restaurant, description, time, price, additives, imageUrl } = req.body;
         if (!title || !foodTags || !category || !code || !restaurant || !description || !time || !price || !additives || !imageUrl) {
-            return res.status(400).json({ status: false, message: "You have a missing field" });
+            return res.status(400).json({ status: false, message: "Missing required fields" });
         }
         try {
             const newFood = new Food(req.body);
             await newFood.save();
-            res.status(201).json({ status: true, message: "Food has been successfully added" });
+            res.status(201).json({ status: true, message: "Food successfully added" });
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }
     },
 
     getFoodById: async (req, res) => {
-        const id = req.params.id;
         try {
-            const food = await Food.findById(id);
+            const food = await Food.findById(req.params.id);
             if (!food) {
                 return res.status(404).json({ status: false, message: "Food not found" });
             }
@@ -29,16 +28,12 @@ module.exports = {
     },
 
     getRandomFood: async (req, res) => {
-        const code = req.params.code;
         try {
-            let foods = [];
-            if (code) {
-                foods = await Food.aggregate([
-                    { $match: { code: code, isAvailable: true } },
-                    { $sample: { size: 5 } },
-                    { $project: { __v: 0 } }
-                ]);
-            }
+            const foods = await Food.aggregate([
+                { $match: { code: req.params.code, isAvailable: true } },
+                { $sample: { size: 5 } },
+                { $project: { __v: 0 } }
+            ]);
             res.status(200).json(foods);
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
@@ -46,9 +41,8 @@ module.exports = {
     },
 
     getFoodsByRestaurant: async (req, res) => {
-        const id = req.params.id;
         try {
-            const foods = await Food.find({ restaurant: id });
+            const foods = await Food.find({ restaurant: req.params.id });
             res.status(200).json(foods);
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
@@ -56,34 +50,27 @@ module.exports = {
     },
 
     getFoodsByCategoryAndCode: async (req, res) => {
-        const { category, code } = req.params;
         try {
             const foods = await Food.find({
-                category,
-                code,
+                category: req.params.category,
+                code: req.params.code,
                 isAvailable: true
             }).select('-__v');
-            if (foods.length === 0) {
-                return res.status(200).json([]);
-            }
-            res.status(200).json(foods);
+            res.status(200).json(foods.length ? foods : []);
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }
     },
 
     searchFoods: async (req, res) => {
-        const search = req.params.search;
         try {
             const results = await Food.aggregate([
                 {
                     $search: {
                         index: "foods",
                         text: {
-                            query: search,
-                            path: {
-                                wildcard: '*'
-                            }
+                            query: req.params.search,
+                            path: { wildcard: '*' }
                         }
                     }
                 }
@@ -92,5 +79,24 @@ module.exports = {
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }
-    }
+    },
+
+    getRandomFoodsByCategoryAndCode: async (req, res) => {
+        try {
+            let foods = await Food.aggregate([
+                { $match: { category: req.params.category, code: req.params.code, isAvailable: true } },
+                { $sample: { size: 10 } }
+            ]);
+
+            if (!foods.length) {
+                foods = await Food.aggregate([
+                    { $match: { isAvailable: true } },
+                    { $sample: { size: 10 } }
+                ]);
+            }
+            res.status(200).json(foods);
+        } catch (error) {
+            res.status(500).json({ status: false, message: error.message });
+        }
+    },
 };
