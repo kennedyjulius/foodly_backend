@@ -1,7 +1,7 @@
 const Food = require('../models/Food');
 
 module.exports = {
-    addFoods: async (req, res) => {
+    addFood: async (req, res) => {
         const { title, foodTags, category, code, restaurant, description, time, price, additives, imageUrl } = req.body;
         if (!title || !foodTags || !category || !code || !restaurant || !description || !time || !price || !additives || !imageUrl) {
             return res.status(400).json({ status: false, message: "Missing required fields" });
@@ -29,21 +29,15 @@ module.exports = {
 
     getRandomFood: async (req, res) => {
         try {
-            const foods = await Food.aggregate([
-                { $match: { code: req.params.code, isAvailable: true } },
-                { $sample: { size: 5 } },
-                { $project: { __v: 0 } }
-            ]);
-            res.status(200).json(foods);
-        } catch (error) {
-            res.status(500).json({ status: false, message: error.message });
-        }
-    },
-
-    getFoodsByRestaurant: async (req, res) => {
-        try {
-            const foods = await Food.find({ restaurant: req.params.id });
-            res.status(200).json(foods);
+            let randomFoodList = [];
+            if (req.params.code) {
+                randomFoodList = await Food.aggregate([
+                    { $match: { code: req.params.code, isAvailable: true } },
+                    { $sample: { size: 5 } },
+                    { $project: { __v: 0 } }
+                ]);
+            }
+            res.status(200).json(randomFoodList);  // Use randomFoodList instead of foods
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }
