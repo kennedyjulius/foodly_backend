@@ -4,7 +4,8 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const CategoryRoute = require("./routes/category");
 const RestaurantRoute = require("./routes/restaurant");
-const FoodRoute = require("./routes/food"); // Import the FoodRoute here
+const FoodRoute = require("./routes/food");
+const RatingRoute = require("./routes/rating");
 
 dotenv.config();
 
@@ -20,7 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use("/api/category", CategoryRoute);
 app.use("/api/restaurant", RestaurantRoute);
-app.use("/api/foods", FoodRoute); // Now FoodRoute is properly defined and used
+app.use("/api/foods", FoodRoute);
+app.use("/api/rating",RatingRoute);
+ // Now FoodRoute is properly defined and used
 
 // Start the server
 app.listen(process.env.PORT || 6013, () => 
