@@ -1,3 +1,4 @@
+const { Timestamp } = require('firebase-admin/firestore');
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
@@ -14,10 +15,8 @@ const UserSchema = new mongoose.Schema({
         required: false,
     },
     userType: {type: String, required: true, default: "client", enum: ["client", "Admin", "Vendor", "Driver"]},
-    profile: {type: String, default: ''},
-    username: {type: String, required: true},
-    username: {type: String, required: true},
-    username: {type: String, required: true},
-});
+    profile: {type: String, default: 'https://d326fntlu7tb1e.cloudfront.net/uploads/bdec9d7d-0544-4fc4-823d-3b898f6dbbbf-vinci_03.jpeg'},
+    timestamps: true});
 
-module.exports = mongoose.model('Category', CategorySchema)
+
+module.exports = mongoose.model('User', UserSchemaSchema)
