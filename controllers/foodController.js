@@ -30,6 +30,7 @@ module.exports = {
     getRandomFood: async (req, res) => {
         try {
             let randomFoodList = [];
+
             if (req.params.code) {
                 randomFoodList = await Food.aggregate([
                     { $match: { code: req.params.code, isAvailable: true } },
@@ -37,7 +38,20 @@ module.exports = {
                     { $project: { __v: 0 } }
                 ]);
             }
-            res.status(200).json(randomFoodList);  // Use randomFoodList instead of foods
+
+            if (!randomFoodList.length) {
+                randomFoodList = await Food.aggregate([
+                    { $match: { isAvailable: true } },
+                    { $sample: { size: 5 } },
+                    { $project: { __v: 0 } }
+                ]);
+            }
+
+            if (randomFoodList.length) {
+                res.status(200).json(randomFoodList);
+            } else {
+                res.status(404).json({ status: false, message: 'No Food found' });
+            }
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }

@@ -6,7 +6,7 @@ const FoodSchema = new mongoose.Schema({
     time: {type: String, required: true},
     foodTags: {type: Array, required: true},
     category: {type: String, required: true},
-    foodType: {type: String, required: true},
+    foodType: {type: Array, required: true},
     code: {type: String, required: true},
     isAvailable: {type: Boolean, default: true},
     restaurant: {type: mongoose.Schema.Types.ObjectId, required: true},
