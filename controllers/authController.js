@@ -79,6 +79,16 @@ module.exports = {
 
             const decryptedPassword = CryptoJS.decrypt(user.password, process.env.SECRET);
             const depassword = decryptedPassword.toString(CryptoJS.enc.Utf8);
+
+            if (depassword !== req.body.password) {
+                return res.status(400).json({status: false, message: "Wrong Passowrd"});
+            }
+            const userToken = jwt.sign({
+                id: user._id,
+                userType: user.userType,
+                email: user.email,
+            }, process.env.SECRET, {expiresIn: "1d"}
+        );
         } catch (error) {
             
         }
