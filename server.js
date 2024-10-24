@@ -7,6 +7,7 @@ const RestaurantRoute = require("./routes/restaurant");
 const FoodRoute = require("./routes/food");
 const RatingRoute = require("./routes/rating");
 const generateOtp = require('./utils/otp_generator');
+const sendEmail = require('./utils/smtp_function');
 
 dotenv.config();
 
@@ -14,6 +15,13 @@ dotenv.config();
 mongoose.connect(process.env.MONGOURL)
   .then(() => console.log("FoodLY Database connected"))
   .catch((err) => console.log(err));
+
+  const otp = generateOtp();
+
+  console.log(otp);
+  
+
+  sendEmail('kennedymutugi111@gmail.com', otp)
 
 // Middleware
 app.use(express.json());
