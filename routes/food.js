@@ -3,7 +3,7 @@ const router = express.Router();
 const foodController = require('../controllers/foodController'); // Ensure the path is correct
 
 // Define routes
-router.post("/", foodController.addFood); // Check if addFood exists in foodController
+router.post("/", verifyVendor,foodController.addFood); // Check if addFood exists in foodController
 router.get("/:id", foodController.getFoodById);
 //router.get("/random/:code", foodController.getRandomFood);
 router.get("/search/:search", foodController.searchFoods);

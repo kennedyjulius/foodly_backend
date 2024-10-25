@@ -33,7 +33,7 @@ app.use("/api/auth", AuthRoute); // Corrected route usage
 app.use("/api/restaurant", RestaurantRoute);
 app.use("/api/foods", FoodRoute);
 app.use("/api/rating", RatingRoute);
-app.use("/users", UserRoute);
+app.use("/api/users", UserRoute);
 
 // Start the server
 app.listen(process.env.PORT || 6013, () => 
