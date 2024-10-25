@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const restaurantController = require('../controllers/restaurantController');
-const { verifyTokenAndAuthorization } = require('../middlewares/verifyToken');
+const { verifyTokenAndAuthorization } = require('../middleware/verifyToken');
 
 // Use the correct function names
 router.post("/add", verifyTokenAndAuthorization,restaurantController.addRestaurant);

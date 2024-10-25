@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const foodController = require('../controllers/foodController'); // Ensure the path is correct
+const { verifyVendor } = require('../middleware/verifyToken');
 
 // Define routes
 router.post("/", verifyVendor,foodController.addFood); // Check if addFood exists in foodController
