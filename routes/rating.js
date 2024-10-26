@@ -6,6 +6,6 @@ const {verifyTokenAndAuthorization} = require ('../middleware/verifyToken')
 router.post("/",  verifyTokenAndAuthorization,ratingController.addRating);
 
 
-router.get("/", verifyTokenAndAuthorization,ratingController.checkUserRating);
+// router.get("/", verifyTokenAndAuthorization,ratingController.checkUserRating);
 
 module.exports = router;
