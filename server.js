@@ -9,7 +9,8 @@ const RestaurantRoute = require("./routes/restaurant");
 const FoodRoute = require("./routes/food");
 const RatingRoute = require("./routes/rating");
 const AuthRoute = require('./routes/auth'); // Corrected the path
-const UserRoute = require('./routes/user'); // Corrected the path
+const UserRoute = require('./routes/user'); 
+const AddressRoute = require('./routes/address');
 
 dotenv.config();
 
@@ -34,6 +35,8 @@ app.use("/api/restaurant", RestaurantRoute);
 app.use("/api/foods", FoodRoute);
 app.use("/api/rating", RatingRoute);
 app.use("/api/users", UserRoute);
+app.use("/api/address", AddressRoute);
+
 
 // Start the server
 app.listen(process.env.PORT || 6013, () => 
