@@ -5,100 +5,75 @@ const generateOtp = require('../utils/otp_generator');
 const sendEmail = require('../utils/smtp_function');
 
 module.exports = {
+    // Register User with OTP
     createUser: async (req, res) => {
+        const { username, email, password } = req.body;
+
+        // Validate email and password
         const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-
-        // Validate email format
-        if (!emailRegex.test(req.body.email)) {
-            return res.status(400).json({ status: false, message: "Email is not valid" });
-        }
-
-        const minPasswordLength = 8;
-
-        // Validate password length
-        if (req.body.password.length < minPasswordLength) {
-            return res.status(400).json({
-                status: false,
-                message: `Password should be at least ${minPasswordLength} characters`
-            });
-        }
+        if (!emailRegex.test(email)) return res.status(400).json({ message: "Invalid email" });
+        if (password.length < 8) return res.status(400).json({ message: "Password too short" });
 
         try {
             // Check if email already exists
-            const emailExists = await User.findOne({ email: req.body.email });
+            const emailExists = await User.findOne({ email });
+            if (emailExists) return res.status(400).json({ message: "Email already registered" });
 
-            if (emailExists) {
-                return res.status(400).json({ status: false, message: "Email already exists" });
-            }
-
-            // Generate OTP
+            // Generate and store OTP
             const otp = generateOtp();
+            const encryptedPassword = CryptoJS.AES.encrypt(password, process.env.SECRET).toString();
 
-            // Proceed with user creation
-            const newUser = new User({
-                username: req.body.username,
-                email: req.body.email,
-                userType: "Client",
-                password: CryptoJS.AES.encrypt(req.body.password, process.env.SECRET).toString(),
-                otp: otp
-            });
-
+            // Create new user
+            const newUser = new User({ username, email, password: encryptedPassword, otp });
             await newUser.save();
 
-            // Send OTP to email
-            sendEmail(newUser.email, otp);
+            // Send OTP email
+            await sendEmail(email, otp);
 
-            res.status(201).json({ status: true, message: "User successfully created" });
-
+            res.status(201).json({ message: "User created, check your email for OTP" });
         } catch (error) {
-            res.status(500).json({ status: false, message: error.message });
+            res.status(500).json({ message: error.message });
         }
     },
 
-    loginUser: async (req, res) => {
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-
-        // Validate email format
-        if (!emailRegex.test(req.body.email)) {
-            return res.status(400).json({ status: false, message: "Email is not valid" });
-        }
-
-        const minPasswordLength = 8;
-
-        // Validate password length
-        if (req.body.password.length < minPasswordLength) {
-            return res.status(400).json({
-                status: false,
-                message: `Password should be at least ${minPasswordLength} characters`
-            });
-        }
+    // Verify Account using OTP
+    verifyAccount: async (req, res) => {
+        const { email, otp } = req.body; // Adjust to use email and OTP from body
 
         try {
-            const user = await User.findOne({ email: req.body.email });
+            const user = await User.findOne({ email });
 
-            if (!user) {
-                return res.status(400).json({ status: false, message: "User not found" });
-            }
+            // Validate OTP and user status
+            if (!user) return res.status(404).json({ message: "User not found" });
+            if (user.verification) return res.status(400).json({ message: "Account already verified" });
+            if (user.otp !== otp) return res.status(400).json({ message: "Invalid OTP" });
 
-            const decryptedPassword = CryptoJS.AES.decrypt(user.password, process.env.SECRET);
-            const depassword = decryptedPassword.toString(CryptoJS.enc.Utf8);
+            // Update user verification status
+            user.verification = true;
+            user.otp = "none"; // Invalidate OTP
+            await user.save();
 
-            if (depassword !== req.body.password) {
-                return res.status(400).json({ status: false, message: "Wrong Password" });
-            }
-
-            const userToken = jwt.sign({
-                id: user._id,
-                userType: user.userType,
-                email: user.email,
-            }, process.env.JWT_SECRET, { expiresIn: "1d" });
-
-            const { password, createdAt,updatedAt, __v,otp,  ...others } = user._doc;
-
-            res.status(200).json({ ...others, userToken });
-
+            res.status(200).json({ message: "Account verified successfully" });
         } catch (error) {
-            res.status(500).json({ status: false, message: error.message });
+            res.status(500).json({ message: error.message });
+        }
+    },
+
+    // Login User with password decryption
+    loginUser: async (req, res) => {
+        const { email, password } = req.body;
+
+        try {
+            const user = await User.findOne({ email });
+            if (!user) return res.status(400).json({ message: "User not found" });
+
+            const decryptedPassword = CryptoJS.AES.decrypt(user.password, process.env.SECRET).toString(CryptoJS.enc.Utf8);
+            if (decryptedPassword !== password) return res.status(400).json({ message: "Invalid password" });
+
+            const token = jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: "1d" });
+            res.status(200).json({ message: "Login successful", token });
+        } catch (error) {
+            res.status(500).json({ message: error.message });
         }
     }
 };

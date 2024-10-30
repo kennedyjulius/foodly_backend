@@ -11,6 +11,7 @@ const RatingRoute = require("./routes/rating");
 const AuthRoute = require('./routes/auth'); // Corrected the path
 const UserRoute = require('./routes/user'); 
 const AddressRoute = require('./routes/address');
+const CartRoute = require('./routes/cart');
 
 dotenv.config();
 
@@ -36,6 +37,7 @@ app.use("/api/foods", FoodRoute);
 app.use("/api/rating", RatingRoute);
 app.use("/api/users", UserRoute);
 app.use("/api/address", AddressRoute);
+app.use("/api/cart", CartRoute);
 
 
 // Start the server
