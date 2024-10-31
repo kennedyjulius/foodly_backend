@@ -5,7 +5,7 @@ const {verifyTokenAndAuthorization} = require('../middleware/verifyToken');
 // Use the correct function names
 router.post("/", verifyTokenAndAuthorization, cartController.addProductToCart);
 
-router.get("/decrement", verifyTokenAndAuthorization, cartController.decrementProductQty);
+router.get("/decrement/:ID", verifyTokenAndAuthorization, cartController.decrementProductQty);
 
 router.delete("/:id", verifyTokenAndAuthorization, cartController.removeCartItem);
 
