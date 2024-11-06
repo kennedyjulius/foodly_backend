@@ -15,6 +15,17 @@ module.exports = {
         }
     },
 
+    getAllFoodsByCode: async(req, res) =>{
+        const code = req.params.code;
+
+        try {
+          const foodList = await Food.find({code: code});
+          return res.status(200).json(foodList);
+        } catch (error) {
+            return res.status(500).json({status: false, message:error.message}); 
+        }
+    },
+
     getFoodById: async (req, res) => {
         try {
             const food = await Food.findById(req.params.id);
