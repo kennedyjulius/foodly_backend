@@ -22,9 +22,9 @@ mongoose.connect(process.env.MONGOURL)
   .catch((err) => console.log(err));
 
 // Generate OTP and send email for testing
-const otp = generateOtp();
-console.log(otp);
-sendEmail('kennedymutugi111@gmail.com', otp);
+// const otp = generateOtp();
+// console.log(otp);
+// sendEmail('kennedymutugi111@gmail.com', otp);
 
 // Middleware
 app.use(express.json());

@@ -4,38 +4,37 @@ const Order = require('../models/Order');
 module.exports = {
     placeOrder: async (req, res) => {
         const newOrder = new Order({
-         ...req.body,
-         userId: req.user.id   
+            ...req.body,
+            userId: req.user.id   
         });
 
         try {
             await newOrder.save();
-
-            const orderId = newOrder._id;
-            res.status(200).json({status: true, message: "Order Placed Successfully"})
+            res.status(201).json({ status: true, message: "Order Placed Successfully" });
         } catch (error) {
-            
+            res.status(400).json({ status: false, error: error.message });
         }
     },
 
-    getUserOrders: async (req, res) =>{
+    getUserOrders: async (req, res) => {
         const userId = req.user.id;
-        const {paymentStatus, orderStatus} = req.query;
+        const { paymentStatus, orderStatus } = req.query;
 
-        let query  = {userId};
+        let query = { userId };
 
-        if (paymentStatus ===orderStatus) {
+        // Filter by orderStatus if provided
+        if (orderStatus) {
             query.orderStatus = orderStatus;
         }
 
         try {
             const orders = await Order.find(query).populate({
-                path: 'OrderItems.foodId',
+                path: 'orderItems.foodId',
                 select: "imageUrl title rating time"
-            })
-            res.status(200),json(orders)
+            });
+            res.status(200).json(orders);
         } catch (error) {
-          res.status(500).json({status: false, message: error.message});  
+            res.status(500).json({ status: false, message: error.message });
         }
     }
-}
+};
