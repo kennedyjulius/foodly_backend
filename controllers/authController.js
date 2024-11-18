@@ -56,38 +56,7 @@ module.exports = {
     },
 
     // Verify Account using OTP
-    verifyAccount: async (req, res) => {
-        const { email, otp } = req.body;
-
-        console.log("Verification Request - Email:", email, "OTP:", otp);
-
-        try {
-            const user = await User.findOne({ email });
-            console.log("User found:", user);
-
-            if (!user) {
-                return res.status(404).json({ message: "User not found" });
-            }
-            if (user.verification) {
-                return res.status(400).json({ message: "Account already verified" });
-            }
-            if (String(user.otp) !== Number(otp)) {
-                console.log("Invalid OTP - Stored:", user.otp, "Provided:", otp);
-                return res.status(400).json({ message: "Invalid OTP" });
-            }
-
-            // Update user verification status
-            user.verification = true;
-            user.otp = "none"; // Invalidate OTP
-            await user.save();
-
-            res.status(200).json({ message: "Account verified successfully" });
-        } catch (error) {
-            console.error("Error verifying account:", error);
-            res.status(500).json({ message: error.message });
-        }
-    },
-
+     
     // Login User with password decryption
     loginUser: async (req, res) => {
         const { email, password } = req.body;
@@ -102,25 +71,34 @@ module.exports = {
                 return res.status(400).json({ message: "User not found, kindly consider signing up" });
             }
 
-            const decryptedPassword = CryptoJS.AES.decrypt(user.password, process.env.SECRET || "default_secret").toString(CryptoJS.enc.Utf8);
-            if (decryptedPassword !== password) {
+            const decryptedPassword = CryptoJS.AES.decrypt(user.password, process.env.SECRET );
+            const depassword = decryptedPassword.toString(CryptoJS.enc.Utf8);
+            if (depassword !== req.body.password) {
                 console.log("Invalid password for user:", email);
                 return res.status(400).json({ message: "Invalid password" });
             }
 
             const token = jwt.sign(
-                { id: user._id, email: user.email },
+                { 
+                id: user._id, 
+                email: user.email },
                 process.env.JWT_SECRET || "default_jwt_secret",
-                { expiresIn: "1d" }
+                { expiresIn: "21d" }
             );
-            if (!user.verification) {
-                return res.status(400).json({ 
-                    message: "Account not verified. Please verify your email first",
-                    needsVerification: true 
-                });
-            }
 
-            res.status(200).json({ message: "Login successful", token });
+            const {password,createdAt,updatedAt, __v ,otp, ...others} = user._doc;
+
+            res.status(200).json({...others, token})
+
+
+            // if (!user.verification) {
+            //     return res.status(400).json({ 
+            //         message: "Account not verified. Please verify your email first",
+            //         needsVerification: true 
+            //     });
+            // }
+
+           // res.status(200).json({ message: "Login successful", token });
         } catch (error) {
             console.error("Error during login:", error);
             res.status(500).json({ message: error.message });
