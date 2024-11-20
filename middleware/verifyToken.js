@@ -17,7 +17,7 @@ const verifyToken = (req, res, next) => {
     } else {
         return res.status(401).json({ status: false, message: "You are not authenticated!" });
     }
-};
+}; 
 
 // Middleware to verify token and user authorization
 const verifyTokenAndAuthorization = (req, res, next) => {

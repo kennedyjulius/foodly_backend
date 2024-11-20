@@ -45,6 +45,7 @@ module.exports = {
 
     verifyAccount: async(req , res)=>{
         const userOtp = req.params.otp;
+        //const {email, otp} = req.body;
 
         try {
             const user = await User.findById(req.user.id);
@@ -52,11 +53,18 @@ module.exports = {
             if (!user) {
                 return res.status(400).json({status: false, message: "User not found"});
             }
-           user.verification = true;
-           user.otp = null;
+            if (userOtp === user.otp) {
+                user.verification = true;
+                user.otp = "none";  
 
-           await user.save();
-           return res.status(200).json({status: true, message: "Account verified successfully"});
+                await user.save();
+                return res.status(200).json({status: true, message: "Account verified successfully"});
+            }else{
+                return res.status(400).json({status: false, message: "otp verification failed"});
+            }
+           
+
+           
         } catch (error) {
             res.status(500).json({status: false, message: error.message});
         }
@@ -66,12 +74,9 @@ module.exports = {
         try {
             const user = await User.findByIdAndDelete(req.user.id);
 
-            if (!user) {
-                return res.status(404).json({ status: false, message: "User successful deleted" });
-            }
-
+          
             
-            res.status(200).json(userData);
+            res.status(200).json({status: false , message: "User successfully deleted"});
         } catch (error) {
             res.status(500).json({ status: false, message: error.message });
         }
