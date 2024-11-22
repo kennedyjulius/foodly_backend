@@ -1,106 +1,79 @@
 const User = require('../models/User');
-const CryptoJS = require('crypto-js');
-const jwt = require('jsonwebtoken');
-const generateOtp = require('../utils/otp_generator');
-const sendEmail = require('../utils/smtp_function');
+const UserVerification = require('../models/UserVerification');
+const bcrypt = require('bcrypt');
+const generateVerificationLink = require('../utils/generateVerificationLink');
+const sendEmail = require('../utils/smtpFunction');
 
 module.exports = {
-    // Register User with OTP
-    createUser: async (req, res) => {
-        const { username, email, password } = req.body;
+    signUp: async (req, res) => {
+        const { name, email, password } = req.body;
 
-        // Validate email and password
-        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
-        if (!emailRegex.test(email)) {
-            return res.status(400).json({ message: "Invalid email" });
-        }
-        if (password.length < 8) {
-            return res.status(400).json({ message: "Password too short" });
+        if (!name || !email || !password) {
+            return res.status(400).json({ message: "All fields are required." });
         }
 
         try {
-            // Check if email already exists
-            const emailExists = await User.findOne({ email });
-            if (emailExists) {
-                return res.status(400).json({ message: "Email already registered" });
+            // Check if email exists
+            const existingUser = await User.findOne({ email });
+            if (existingUser) {
+                return res.status(400).json({ message: "Email is already registered." });
             }
 
-            // Generate and store OTP
-            const otp = generateOtp();
-            console.log("Generated OTP:", otp); // Debugging OTP
-            const encryptedPassword = CryptoJS.AES.encrypt(password, process.env.SECRET || "default_secret").toString();
+            // Hash password
+            const hashedPassword = await bcrypt.hash(password, 10);
 
             // Create new user
             const newUser = new User({
-                username,
+                name,
                 email,
-                password: encryptedPassword,
-                otp,
+                password: hashedPassword,
             });
             await newUser.save();
 
-            // Send OTP email
-            try {
-                await sendEmail(email, otp);
-                console.log("Email sent to:", email);
-            } catch (error) {
-                console.error("Email sending error:", error);
-                return res.status(500).json({ message: "Failed to send OTP email" });
-            }
+            // Generate verification link
+            const { verificationLink, hash } = await generateVerificationLink(newUser.userId);
 
-            res.status(201).json({ message: "User created, check your email for OTP" });
+            // Save verification details
+            const userVerification = new UserVerification({
+                userId: newUser.userId,
+                uniqueString: hash,
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
+            });
+            await userVerification.save();
+
+            // Send email
+            await sendEmail(email, verificationLink);
+
+            res.status(201).json({ message: "Signup successful! Check your email for verification." });
         } catch (error) {
-            console.error("Error creating user:", error);
             res.status(500).json({ message: error.message });
         }
     },
 
-    // Verify Account using OTP
-     
-    // Login User with password decryption
-    loginUser: async (req, res) => {
+    login: async (req, res) => {
         const { email, password } = req.body;
 
-        console.log("Login Request - Email:", email);
+        if (!email || !password) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
 
         try {
             const user = await User.findOne({ email });
-            console.log("User found:", user);
-
             if (!user) {
-                return res.status(400).json({ message: "User not found, kindly consider signing up" });
+                return res.status(400).json({ message: "Invalid credentials." });
             }
 
-            const decryptedPassword = CryptoJS.AES.decrypt(user.password, process.env.SECRET );
-            const depassword = decryptedPassword.toString(CryptoJS.enc.Utf8);
-            if (depassword !== req.body.password) {
-                console.log("Invalid password for user:", email);
-                return res.status(400).json({ message: "Invalid password" });
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+            if (!isPasswordValid) {
+                return res.status(400).json({ message: "Invalid credentials." });
             }
 
-            const token = jwt.sign(
-                { 
-                id: user._id, 
-                email: user.email },
-                process.env.JWT_SECRET || "default_jwt_secret",
-                { expiresIn: "21d" }
-            );
+            if (!user.verified) {
+                return res.status(400).json({ message: "Account not verified. Check your email." });
+            }
 
-            const {password,createdAt,updatedAt, __v ,otp, ...others} = user._doc;
-
-            res.status(200).json({...others, token})
-
-
-            // if (!user.verification) {
-            //     return res.status(400).json({ 
-            //         message: "Account not verified. Please verify your email first",
-            //         needsVerification: true 
-            //     });
-            // }
-
-           // res.status(200).json({ message: "Login successful", token });
+            res.status(200).json({ message: "Login successful!", userId: user.userId });
         } catch (error) {
-            console.error("Error during login:", error);
             res.status(500).json({ message: error.message });
         }
     },
