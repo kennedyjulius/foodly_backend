@@ -48,6 +48,7 @@ module.exports = mongoose.model('User', userSchema);
 // const UserSchema = new mongoose.Schema({
 //     username: {type: String, required: true},
 //     email: {type: String, required: true, unique: true},
+//     fcm: {type: String, required: false, default:"none"},
 //     otp: {type: Number},
 //     password: {type: String, required: true},
 //     verification: {type: Boolean, default: false},
